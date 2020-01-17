@@ -29,9 +29,15 @@ void read_instructors_file();
 struct Instructors parse_instructors_line(const char line[]);
 int parse_course_id(char **ptr);
 char* parse_skill(char **ptr);
+void copy(char *destination, const char* source, int size);
 
 int main() {
-    read_instructors_file();
+    char skill[SKILL_SIZE];
+    char *source = "C++            C              Word           Excel          PowerPoint     Assembly       Linux          Shell script   ";
+    copy(skill, source, SKILL_SIZE);
+    printf("%s", skill);
+    printf("");
+//    read_instructors_file();
     return 0;
 }
 
@@ -90,4 +96,10 @@ char* parse_skill(char **ptr) {
     (*ptr) += 15;
 
     return temp_ptr;
+}
+
+// Copy string and pad a terminator
+void copy(char *destination, const char* source, int size) {
+    strncpy(destination, source, size - 1);
+    destination[size] = (char) "\0";
 }
