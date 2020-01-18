@@ -28,16 +28,11 @@ typedef struct Candidate {
 void read_instructors_file();
 struct Instructors parse_instructors_line(const char line[]);
 int parse_course_id(char **ptr);
-char* parse_skill(char **ptr);
+void parse_skill(char *destination, char **ptr);
 void copy(char *destination, const char* source, int size);
 
 int main() {
-    char skill[SKILL_SIZE];
-    char *source = "C++            C              Word           Excel          PowerPoint     Assembly       Linux          Shell script   ";
-    copy(skill, source, SKILL_SIZE);
-    printf("%s", skill);
-    printf("");
-//    read_instructors_file();
+    read_instructors_file();
     return 0;
 }
 
@@ -62,16 +57,7 @@ void read_instructors_file() {
             continue;
         }
 
-        char *ptr = line;
         parse_instructors_line(line);
-        int id = parse_course_id(&ptr);
-        char skill[15];
-        // TODO: Add'\0'
-        strcpy(skill, parse_skill(&ptr));
-        char skill2[15];
-        strcpy(skill2, parse_skill(&ptr));
-        printf("hey");
-        
         break;
     }
 
@@ -81,6 +67,13 @@ void read_instructors_file() {
 struct Instructors parse_instructors_line(const char *line) {
     printf("Parsing Line!\n");
 //    Instructors *course = malloc(sizeof(Instructors));
+    char *ptr = line;
+
+    int id = parse_course_id(&ptr);
+    printf("foo");
+    char skill1[SKILL_SIZE];
+    parse_skill(skill1, &ptr);
+    printf("%s", skill1);
 }
 
 // Read the Course ID and move to the next slot
@@ -91,15 +84,16 @@ int parse_course_id(char **ptr) {
     return course_id;
 }
 
-char* parse_skill(char **ptr) {
-    char *temp_ptr = (*ptr);
-    (*ptr) += 15;
-
-    return temp_ptr;
+void parse_skill(char *destination, char **ptr) {
+    copy(destination, (*ptr), SKILL_SIZE);
+    // Pointer change after return?
+    printf("voo");
+//    (*ptr) += 15;
 }
 
 // Copy string and pad a terminator
 void copy(char *destination, const char* source, int size) {
     strncpy(destination, source, size - 1);
+    printf("voo");
     destination[size] = (char) "\0";
 }
