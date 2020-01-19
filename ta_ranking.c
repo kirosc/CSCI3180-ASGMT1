@@ -24,6 +24,8 @@ typedef struct Candidate {
     int preference[MAX_PREFERENCE];
 } Candidate;
 
+FILE *read_file(const char* name);
+
 Instructors **read_instructors_file();
 
 struct Instructors *parse_instructors_line(char *line);
@@ -34,27 +36,33 @@ const char *parse_skill(char **ptr);
 
 char *copy_from(const char *source, int size);
 
+Candidate **read_candidates_file();
+
 int number_of_course;
 
 int main() {
-    Instructors **course = NULL;
-    course = read_instructors_file();
+    Instructors **courses = NULL;
+    Candidate **candidates = NULL;
+    courses = read_instructors_file();
+    candidates = read_candidates_file();
 
     return 0;
 }
 
-void read_file() {
-
-}
-
-Instructors **read_instructors_file() {
-    // TODO: Remove .. when submit
-    FILE *file = fopen("../instructors.txt", "r");
+FILE *read_file(const char* name) {
+    FILE *file = fopen(name, "r");
 
     if (file == NULL) {
         printf("%s", "non-existing file!");
         exit(-1);
     }
+
+    return file;
+}
+
+Instructors **read_instructors_file() {
+    // TODO: Remove .. when submit
+    FILE *file = read_file("../instructors.txt");
 
     char line[INSTRUCTOR_LINE_SIZE];
     Instructors **course = NULL;
@@ -90,6 +98,10 @@ Instructors *parse_instructors_line(char *line) {
     }
 
     return course;
+}
+
+Candidate **read_candidates_file() {
+    return NULL;
 }
 
 // Read the Course ID and move to the next slot
