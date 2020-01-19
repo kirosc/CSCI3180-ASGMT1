@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define INSTRUCTOR_LINE_SIZE  126
+#define CANDIDATE_LINE_SIZE  146
 #define SKILL_STRING_SIZE  16
 #define MAX_REQUIRED_SKILLS  3
 #define MAX_OPTIONAL_SKILLS  5
@@ -12,11 +13,11 @@
 #define PREFERENCE2_SCORE  1
 #define PREFERENCE3_SCORE  0.5
 
-typedef struct Instructors {
+typedef struct Instructor {
     int id;
     const char *required_skills[MAX_REQUIRED_SKILLS];
     const char *optional_skills[MAX_OPTIONAL_SKILLS];
-} Instructors;
+} Instructor;
 
 typedef struct Candidate {
     int id;
@@ -26,9 +27,9 @@ typedef struct Candidate {
 
 FILE *read_file(const char* name);
 
-Instructors **read_instructors_file();
+Instructor **read_instructors_file();
 
-struct Instructors *parse_instructors_line(char *line);
+struct Instructor *parse_instructors_line(char *line);
 
 int parse_course_id(char **ptr);
 
@@ -38,10 +39,12 @@ char *copy_from(const char *source, int size);
 
 Candidate **read_candidates_file();
 
-int number_of_course;
+Candidate *parse_candidate_line(char *line);
+
+int number_of_course, number_of_candidate;
 
 int main() {
-    Instructors **courses = NULL;
+    Instructor **courses = NULL;
     Candidate **candidates = NULL;
     courses = read_instructors_file();
     candidates = read_candidates_file();
@@ -60,12 +63,12 @@ FILE *read_file(const char* name) {
     return file;
 }
 
-Instructors **read_instructors_file() {
+Instructor **read_instructors_file() {
     // TODO: Remove .. when submit
     FILE *file = read_file("../instructors.txt");
 
     char line[INSTRUCTOR_LINE_SIZE];
-    Instructors **courses = NULL;
+    Instructor **courses = NULL;
 
     while (fgets(line, sizeof(line), file)) {
         // Encounter carriage return (Windows)
@@ -74,7 +77,7 @@ Instructors **read_instructors_file() {
         }
 
         number_of_course++;
-        courses = realloc(courses, number_of_course * sizeof(Instructors *));
+        courses = realloc(courses, number_of_course * sizeof(Instructor *));
         courses[number_of_course - 1] = parse_instructors_line(line);
     }
 
@@ -83,8 +86,8 @@ Instructors **read_instructors_file() {
     return courses;
 }
 
-Instructors *parse_instructors_line(char *line) {
-    Instructors *course = malloc(sizeof(Instructors));
+Instructor *parse_instructors_line(char *line) {
+    Instructor *course = malloc(sizeof(Instructor));
     char *ptr = line;
 
     int id = parse_course_id(&ptr);
@@ -101,8 +104,32 @@ Instructors *parse_instructors_line(char *line) {
 }
 
 Candidate **read_candidates_file() {
+    // TODO: Remove .. when submit
+    FILE *file = read_file("../candidates.txt");
+
+    char line[CANDIDATE_LINE_SIZE];
+    Candidate **candidates = NULL;
+
+    while (fgets(line, sizeof(line), file)) {
+        // Encounter carriage return (Windows)
+        if (line[0] == '\r' && line[1] == '\n') {
+            continue;
+        }
+
+        number_of_candidate++;
+        candidates = realloc(candidates, number_of_candidate * sizeof(Candidate *));
+        candidates[number_of_course - 1] = parse_candidate_line(line);
+    }
+
+    fclose(file);
+
+    return candidates;
+}
+
+Candidate *parse_candidate_line(char *line) {
     return NULL;
 }
+
 
 // Read the Course ID and move to the next slot
 int parse_course_id(char **ptr) {
