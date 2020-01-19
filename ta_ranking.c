@@ -14,25 +14,32 @@
 
 typedef struct Instructors {
     int id;
-    char *required_skills[MAX_REQUIRED_SKILLS];
-    char *optional_skills[MAX_OPTIONAL_SKILLS];
-    struct Instructors *next;
+    const char *required_skills[MAX_REQUIRED_SKILLS];
+    const char *optional_skills[MAX_OPTIONAL_SKILLS];
 } Instructors;
 
 typedef struct Candidate {
     int id;
-    char skills[MAX_CANDIDATE_SKILLS][SKILL_STRING_SIZE];
+    const char *skills[MAX_CANDIDATE_SKILLS];
     int preference[MAX_PREFERENCE];
 } Candidate;
 
-void read_instructors_file();
-struct Instructors * parse_instructors_line(const char line[]);
+Instructors **read_instructors_file();
+
+struct Instructors *parse_instructors_line(char *line);
+
 int parse_course_id(char **ptr);
-char * parse_skill(char **ptr);
-char * copy_from(const char *source, int size);
+
+const char *parse_skill(char **ptr);
+
+char *copy_from(const char *source, int size);
+
+int number_of_course;
 
 int main() {
-    read_instructors_file();
+    Instructors **course = NULL;
+    course = read_instructors_file();
+
     return 0;
 }
 
@@ -40,7 +47,7 @@ void read_file() {
 
 }
 
-void read_instructors_file() {
+Instructors **read_instructors_file() {
     // TODO: Remove .. when submit
     FILE *file = fopen("../instructors.txt", "r");
 
@@ -50,8 +57,7 @@ void read_instructors_file() {
     }
 
     char line[INSTRUCTOR_LINE_SIZE];
-    int number_of_course;
-    Instructors** course = NULL;
+    Instructors **course = NULL;
 
     while (fgets(line, sizeof(line), file)) {
         // Encounter carriage return (Windows)
@@ -60,15 +66,16 @@ void read_instructors_file() {
         }
 
         number_of_course++;
-        course = realloc(course, number_of_course * sizeof(Instructors*));
-        *(course + number_of_course - 1) = parse_instructors_line(line);
+        course = realloc(course, number_of_course * sizeof(Instructors *));
+        course[number_of_course - 1] = parse_instructors_line(line);
     }
 
     fclose(file);
+
+    return course;
 }
 
-struct Instructors * parse_instructors_line(const char *line) {
-    printf("Parsing Line!\n");
+Instructors *parse_instructors_line(char *line) {
     Instructors *course = malloc(sizeof(Instructors));
     char *ptr = line;
 
@@ -93,7 +100,7 @@ int parse_course_id(char **ptr) {
     return course_id;
 }
 
-char * parse_skill(char **ptr) {
+const char *parse_skill(char **ptr) {
     const char *skill = copy_from((*ptr), SKILL_STRING_SIZE);
     (*ptr) += SKILL_STRING_SIZE - 1;
 
@@ -101,10 +108,10 @@ char * parse_skill(char **ptr) {
 }
 
 // Copy string and pad a terminator
-char * copy_from(const char *source, int size) {
-    char * destination = malloc(sizeof(char) * size);
+char *copy_from(const char *source, int size) {
+    char *destination = malloc(sizeof(char) * size);
     strncpy(destination, source, size - 1);
-    destination[size] = (char) "\0";
+    destination[size] = '\0';
 
     return destination;
 }
