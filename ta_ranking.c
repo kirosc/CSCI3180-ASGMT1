@@ -65,7 +65,7 @@ Instructors **read_instructors_file() {
     FILE *file = read_file("../instructors.txt");
 
     char line[INSTRUCTOR_LINE_SIZE];
-    Instructors **course = NULL;
+    Instructors **courses = NULL;
 
     while (fgets(line, sizeof(line), file)) {
         // Encounter carriage return (Windows)
@@ -74,13 +74,13 @@ Instructors **read_instructors_file() {
         }
 
         number_of_course++;
-        course = realloc(course, number_of_course * sizeof(Instructors *));
-        course[number_of_course - 1] = parse_instructors_line(line);
+        courses = realloc(courses, number_of_course * sizeof(Instructors *));
+        courses[number_of_course - 1] = parse_instructors_line(line);
     }
 
     fclose(file);
 
-    return course;
+    return courses;
 }
 
 Instructors *parse_instructors_line(char *line) {
