@@ -14,8 +14,8 @@
 
 typedef struct Instructors {
     int id;
-    char required_skills[MAX_REQUIRED_SKILLS][SKILL_STRING_SIZE];
-    char optional_skills[MAX_OPTIONAL_SKILLS][SKILL_STRING_SIZE];
+    char *required_skills[MAX_REQUIRED_SKILLS];
+    char *optional_skills[MAX_OPTIONAL_SKILLS];
     struct Instructors *next;
 } Instructors;
 
@@ -26,7 +26,7 @@ typedef struct Candidate {
 } Candidate;
 
 void read_instructors_file();
-struct Instructors parse_instructors_line(const char line[]);
+struct Instructors * parse_instructors_line(const char line[]);
 int parse_course_id(char **ptr);
 char * parse_skill(char **ptr);
 char * copy_from(const char *source, int size);
@@ -64,16 +64,22 @@ void read_instructors_file() {
     fclose(file);
 }
 
-struct Instructors parse_instructors_line(const char *line) {
+struct Instructors * parse_instructors_line(const char *line) {
     printf("Parsing Line!\n");
-//    Instructors *course = malloc(sizeof(Instructors));
+    Instructors *course = malloc(sizeof(Instructors));
     char *ptr = line;
 
     int id = parse_course_id(&ptr);
 
-    char *skill1 = parse_skill(&ptr);
-    char *skill2 = parse_skill(&ptr);
-    printf("");
+    course->id = id;
+    for (int i = 0; i < MAX_REQUIRED_SKILLS; ++i) {
+        course->required_skills[i] = parse_skill(&ptr);
+    }
+    for (int i = 0; i < MAX_OPTIONAL_SKILLS; ++i) {
+        course->optional_skills[i] = parse_skill(&ptr);
+    }
+
+    return course;
 }
 
 // Read the Course ID and move to the next slot
