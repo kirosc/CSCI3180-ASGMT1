@@ -50,6 +50,8 @@ void read_instructors_file() {
     }
 
     char line[INSTRUCTOR_LINE_SIZE];
+    int number_of_course;
+    Instructors** course = NULL;
 
     while (fgets(line, sizeof(line), file)) {
         // Encounter carriage return (Windows)
@@ -57,8 +59,9 @@ void read_instructors_file() {
             continue;
         }
 
-        parse_instructors_line(line);
-        break;
+        number_of_course++;
+        course = realloc(course, number_of_course * sizeof(Instructors*));
+        *(course + number_of_course - 1) = parse_instructors_line(line);
     }
 
     fclose(file);
