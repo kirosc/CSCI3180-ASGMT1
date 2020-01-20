@@ -3,7 +3,8 @@
 #include <string.h>
 
 #define INSTRUCTOR_LINE_SIZE  126
-#define CANDIDATE_LINE_SIZE  146
+#define CANDIDATE_LINE_SIZE  147
+#define SKILL_SLOT_SIZE  15
 #define SKILL_STRING_SIZE  16
 #define MAX_REQUIRED_SKILLS  3
 #define MAX_OPTIONAL_SKILLS  5
@@ -13,38 +14,40 @@
 #define PREFERENCE2_SCORE  1
 #define PREFERENCE3_SCORE  0.5
 
-typedef struct Instructor {
+typedef struct Instructors {
     int id;
     const char *required_skills[MAX_REQUIRED_SKILLS];
     const char *optional_skills[MAX_OPTIONAL_SKILLS];
-} Instructor;
+} Instructors;
 
 typedef struct Candidate {
-    int id;
-    const char *skills[MAX_CANDIDATE_SKILLS];
+    int sid;
+    char skills[MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + 1];
     int preference[MAX_PREFERENCE];
 } Candidate;
 
-FILE *read_file(const char* name);
+FILE *read_file(const char *name);
 
-Instructor **read_instructors_file();
+Instructors **read_instructors_file();
 
-struct Instructor *parse_instructors_line(char *line);
+struct Instructors *parse_instructor_line(char *ptr);
 
-int parse_course_id(char **ptr);
-
-const char *parse_skill(char **ptr);
+const char *parse_instructor_skill(char **ptr);
 
 char *copy_from(const char *source, int size);
 
 Candidate **read_candidates_file();
 
-Candidate *parse_candidate_line(char *line);
+const char *parse_candidate_skills(char **ptr);
+
+Candidate *parse_candidate_line(char *ptr);
+
+int parse_number(char **ptr);
 
 int number_of_course, number_of_candidate;
 
 int main() {
-    Instructor **courses = NULL;
+    Instructors **courses = NULL;
     Candidate **candidates = NULL;
     courses = read_instructors_file();
     candidates = read_candidates_file();
@@ -52,7 +55,8 @@ int main() {
     return 0;
 }
 
-FILE *read_file(const char* name) {
+// Read a file and return the file pointer
+FILE *read_file(const char *name) {
     FILE *file = fopen(name, "r");
 
     if (file == NULL) {
@@ -63,12 +67,13 @@ FILE *read_file(const char* name) {
     return file;
 }
 
-Instructor **read_instructors_file() {
+// Read the instructors.txt and return an array of Instructors
+Instructors **read_instructors_file() {
     // TODO: Remove .. when submit
     FILE *file = read_file("../instructors.txt");
 
     char line[INSTRUCTOR_LINE_SIZE];
-    Instructor **courses = NULL;
+    Instructors **courses = NULL;
 
     while (fgets(line, sizeof(line), file)) {
         // Encounter carriage return (Windows)
@@ -77,8 +82,8 @@ Instructor **read_instructors_file() {
         }
 
         number_of_course++;
-        courses = realloc(courses, number_of_course * sizeof(Instructor *));
-        courses[number_of_course - 1] = parse_instructors_line(line);
+        courses = realloc(courses, number_of_course * sizeof(Instructors *));
+        courses[number_of_course - 1] = parse_instructor_line(line);
     }
 
     fclose(file);
@@ -86,25 +91,31 @@ Instructor **read_instructors_file() {
     return courses;
 }
 
-Instructor *parse_instructors_line(char *line) {
-    Instructor *course = malloc(sizeof(Instructor));
-    char *ptr = line;
+// Parse a line and return an Instructors struct
+Instructors *parse_instructor_line(char *ptr) {
+    Instructors *course = malloc(sizeof(Instructors));
 
-    int id = parse_course_id(&ptr);
-
-    course->id = id;
+    course->id = parse_number(&ptr);
     for (int i = 0; i < MAX_REQUIRED_SKILLS; ++i) {
-        course->required_skills[i] = parse_skill(&ptr);
+        course->required_skills[i] = parse_instructor_skill(&ptr);
     }
     for (int i = 0; i < MAX_OPTIONAL_SKILLS; ++i) {
-        course->optional_skills[i] = parse_skill(&ptr);
+        course->optional_skills[i] = parse_instructor_skill(&ptr);
     }
 
     return course;
 }
 
+// Parse one candidate skill and return a string
+const char *parse_instructor_skill(char **ptr) {
+    const char *skill = copy_from((*ptr), SKILL_STRING_SIZE);
+    (*ptr) += SKILL_STRING_SIZE - 1;
+
+    return skill;
+}
+
+// Read the candidates.txt and return an array of Candidate
 Candidate **read_candidates_file() {
-    // TODO: Remove .. when submit
     FILE *file = read_file("../candidates.txt");
 
     char line[CANDIDATE_LINE_SIZE];
@@ -118,35 +129,46 @@ Candidate **read_candidates_file() {
 
         number_of_candidate++;
         candidates = realloc(candidates, number_of_candidate * sizeof(Candidate *));
-        candidates[number_of_course - 1] = parse_candidate_line(line);
+        candidates[number_of_candidate - 1] = parse_candidate_line(line);
     }
-
-    fclose(file);
 
     return candidates;
 }
 
-Candidate *parse_candidate_line(char *line) {
-    return NULL;
+// Parse a line and return a Candidate struct
+Candidate *parse_candidate_line(char *ptr) {
+    Candidate *candidate = malloc(sizeof(Candidate));
+
+    candidate->sid = parse_number(&ptr);
+
+    strcpy(candidate->skills, parse_candidate_skills(&ptr));
+
+    for (int i = 0; i < MAX_CANDIDATE_SKILLS; ++i) {
+        candidate->preference[i] = parse_number(&ptr);
+    }
+
+    return candidate;
 }
 
+// Parse all candidate skills and return in a single string
+const char *parse_candidate_skills(char **ptr) {
+    const int CHARS_TO_READ = MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + 1;
 
-// Read the Course ID and move to the next slot
-int parse_course_id(char **ptr) {
-    int course_id = (int) strtoul(*ptr, ptr, 10);
-    (*ptr)++;
+    const char *skills = copy_from((*ptr), CHARS_TO_READ);
+    (*ptr) += CHARS_TO_READ - 1;
 
-    return course_id;
+    return skills;
 }
 
-const char *parse_skill(char **ptr) {
-    const char *skill = copy_from((*ptr), SKILL_STRING_SIZE);
-    (*ptr) += SKILL_STRING_SIZE - 1;
+// Read the a number from a string and move to the next slot
+int parse_number(char **ptr) {
+    int number = (int) strtoul(*ptr, ptr, 10);
+    (*ptr)++; // Skipping the last space
 
-    return skill;
+    return number;
 }
 
-// Copy string and pad a terminator
+// Copy a number of characters and pad a null character
 char *copy_from(const char *source, int size) {
     char *destination = malloc(sizeof(char) * size);
     strncpy(destination, source, size - 1);
