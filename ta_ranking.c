@@ -6,18 +6,23 @@
 #define CANDIDATE_LINE_SIZE  147
 #define SKILL_SLOT_SIZE  15
 #define SKILL_STRING_SIZE  16
+#define SID_SLOT_SIZE  11
 #define MAX_REQUIRED_SKILLS  3
 #define MAX_OPTIONAL_SKILLS  5
 #define MAX_CANDIDATE_SKILLS  8
 #define MAX_PREFERENCE  3
+#define MAX_RANK  3
 #define PREFERENCE1_SCORE  1.5
 #define PREFERENCE2_SCORE  1
 #define PREFERENCE3_SCORE  0.5
+#define NO_CANDIDATE  "0000000000 "
 
 typedef struct Instructors {
     int id;
     const char *required_skills[MAX_REQUIRED_SKILLS];
     const char *optional_skills[MAX_OPTIONAL_SKILLS];
+    int ta_score[MAX_RANK];
+    char ta_sid[MAX_RANK][SID_SLOT_SIZE];
 } Instructors;
 
 typedef struct Candidate {
@@ -43,6 +48,8 @@ const char *parse_candidate_skills(char **ptr);
 Candidate *parse_candidate_line(char *ptr);
 
 int parse_number(char **ptr);
+
+Instructors *initialize_instructor();
 
 int number_of_course, number_of_candidate;
 
@@ -93,7 +100,7 @@ Instructors **read_instructors_file() {
 
 // Parse a line and return an Instructors struct
 Instructors *parse_instructor_line(char *ptr) {
-    Instructors *course = malloc(sizeof(Instructors));
+    Instructors *course = initialize_instructor();
 
     course->id = parse_number(&ptr);
     for (int i = 0; i < MAX_REQUIRED_SKILLS; ++i) {
@@ -101,6 +108,16 @@ Instructors *parse_instructor_line(char *ptr) {
     }
     for (int i = 0; i < MAX_OPTIONAL_SKILLS; ++i) {
         course->optional_skills[i] = parse_instructor_skill(&ptr);
+    }
+
+    return course;
+}
+
+// Initialize an Instructor and the Rank-k TA
+Instructors *initialize_instructor() {
+    Instructors *course = malloc(sizeof(Instructors));
+    for (int i = 0; i < MAX_RANK; ++i) {
+        strcpy(course->ta_sid[i], NO_CANDIDATE);
     }
 
     return course;
