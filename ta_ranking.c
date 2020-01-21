@@ -12,17 +12,17 @@
 #define MAX_CANDIDATE_SKILLS  8
 #define MAX_PREFERENCE  3
 #define MAX_RANK  3
-#define PREFERENCE1_SCORE  1.5
-#define PREFERENCE2_SCORE  1
-#define PREFERENCE3_SCORE  0.5
+#define PREFERENCE1_SCORE  1.5f
+#define PREFERENCE2_SCORE  1.0f
+#define PREFERENCE3_SCORE  0.5f
 #define NO_CANDIDATE  "0000000000 "
 
 typedef struct Instructors {
     int id;
     const char *required_skills[MAX_REQUIRED_SKILLS];
     const char *optional_skills[MAX_OPTIONAL_SKILLS];
-    int ta_score[MAX_RANK];
-    char ta_sid[MAX_RANK][SID_SLOT_SIZE];
+    int candidate_score[MAX_RANK];
+    char candidate_sid[MAX_RANK][SID_SLOT_SIZE];
 } Instructors;
 
 typedef struct Candidate {
@@ -51,6 +51,12 @@ int parse_number(char **ptr);
 
 Instructors *initialize_instructor();
 
+void rank_candidates(Instructors *course, const Candidate **candidates);
+
+float calculate_score(const Instructors *course, const Candidate *candidate);
+
+int satisfy_required_skills(Instructors *course, const Candidate *candidate);
+
 int number_of_course, number_of_candidate;
 
 int main() {
@@ -58,6 +64,8 @@ int main() {
     Candidate **candidates = NULL;
     courses = read_instructors_file();
     candidates = read_candidates_file();
+
+    rank_candidates(courses[0], (const Candidate **) candidates);
 
     return 0;
 }
@@ -117,7 +125,7 @@ Instructors *parse_instructor_line(char *ptr) {
 Instructors *initialize_instructor() {
     Instructors *course = malloc(sizeof(Instructors));
     for (int i = 0; i < MAX_RANK; ++i) {
-        strcpy(course->ta_sid[i], NO_CANDIDATE);
+        strcpy(course->candidate_sid[i], NO_CANDIDATE);
     }
 
     return course;
@@ -192,4 +200,47 @@ char *copy_from(const char *source, int size) {
     destination[size] = '\0';
 
     return destination;
+}
+
+// Get the TA rank of a course
+void rank_candidates(Instructors *course, const Candidate **candidates) {
+    for (int i = 0; i < number_of_candidate; ++i) {
+        if (satisfy_required_skills(course, candidates[i])) {
+            float score = calculate_score(course, candidates[i]);
+        }
+    }
+}
+
+// Check if a candidate satisfy all required skills
+int satisfy_required_skills(Instructors *course, const Candidate *candidate) {
+    if (strstr(candidate->skills, course->required_skills[0]) != NULL &&
+        strstr(candidate->skills, course->required_skills[1]) != NULL &&
+        strstr(candidate->skills, course->required_skills[2]) != NULL) {
+            return 1;
+    }
+
+    return 0;
+}
+
+// Calculate the score of a candidate with reference to a course
+float calculate_score(const Instructors *course, const Candidate *candidate) {
+    float score = 1.0f;
+
+    // Check optional skills
+    for (int i = 0; i < MAX_OPTIONAL_SKILLS; ++i) {
+        if (strstr(candidate->skills, course->optional_skills[i]) != NULL) {
+            score++;
+        }
+    }
+
+    // Check preference
+    if (course->id == candidate->preference[0]) {
+        score += PREFERENCE1_SCORE;
+    } else if (course->id == candidate->preference[1]) {
+        score += PREFERENCE2_SCORE;
+    } else if (course->id == candidate->preference[2]) {
+        score += PREFERENCE3_SCORE;
+    }
+
+    return score;
 }
