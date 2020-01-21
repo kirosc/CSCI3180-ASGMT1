@@ -3,6 +3,8 @@
 #include <string.h>
 
 #define INSTRUCTOR_LINE_SIZE  126
+#define COURSE_SLOT_SIZE 5
+#define COURSE_STRING_SIZE 6
 #define CANDIDATE_LINE_SIZE  147
 #define SKILL_SLOT_SIZE  15
 #define SKILL_STRING_SIZE  16
@@ -32,34 +34,39 @@ typedef struct Candidate {
     int preference[MAX_PREFERENCE];
 } Candidate;
 
-FILE *read_file(const char *name);
+FILE *open_file(const char *name, const char *mode, const char *error_message);
 
 Instructors **read_instructors_file();
 
 struct Instructors *parse_instructor_line(char *ptr);
 
-const char *parse_instructor_skill(char **ptr);
+Instructors *initialize_instructor();
 
-char *copy_from(const char *source, int size);
+const char *parse_instructor_skill(char **ptr);
 
 Candidate **read_candidates_file();
 
-const char *parse_candidate_skills(char **ptr);
-
 Candidate *parse_candidate_line(char *ptr);
+
+const char *parse_candidate_skills(char **ptr);
 
 int parse_number(char **ptr);
 
-Instructors *initialize_instructor();
+char *copy_from(const char *source, int size);
 
 void rank_candidates(Instructors *course, const Candidate **candidates);
 
-float calculate_score(const Instructors *course, const Candidate *candidate);
+int is_satisfy_required_skills(Instructors *course, const Candidate *candidate);
 
-int satisfy_required_skills(Instructors *course, const Candidate *candidate);
+float calculate_score(const Instructors *course, const Candidate *candidate);
 
 void insert_candidate(Instructors *course, float score, char *sid);
 
+char *get_rank_result(Instructors *course);
+
+void write_output_file(Instructors **courses);
+
+// Global variables
 int number_of_course, number_of_candidate;
 
 int main() {
@@ -74,15 +81,17 @@ int main() {
         rank_candidates(courses[i], (const Candidate **) candidates);
     }
 
+    write_output_file(courses);
+
     return 0;
 }
 
 // Read a file and return the file pointer
-FILE *read_file(const char *name) {
-    FILE *file = fopen(name, "r");
+FILE *open_file(const char *name, const char *mode, const char *error_message) {
+    FILE *file = fopen(name, mode);
 
     if (file == NULL) {
-        printf("%s", "non-existing file!");
+        printf("%s", error_message);
         exit(-1);
     }
 
@@ -92,7 +101,7 @@ FILE *read_file(const char *name) {
 // Read the instructors.txt and return an array of Instructors
 Instructors **read_instructors_file() {
     // TODO: Remove .. when submit
-    FILE *file = read_file("../instructors.txt");
+    FILE *file = open_file("../instructors.txt", "r", "non-existing file!");
 
     char line[INSTRUCTOR_LINE_SIZE];
     Instructors **courses = NULL;
@@ -148,7 +157,7 @@ const char *parse_instructor_skill(char **ptr) {
 
 // Read the candidates.txt and return an array of Candidate
 Candidate **read_candidates_file() {
-    FILE *file = read_file("../candidates.txt");
+    FILE *file = open_file("../candidates.txt", "r", "non-existing file!");
 
     char line[CANDIDATE_LINE_SIZE];
     Candidate **candidates = NULL;
@@ -163,6 +172,8 @@ Candidate **read_candidates_file() {
         candidates = realloc(candidates, number_of_candidate * sizeof(Candidate *));
         candidates[number_of_candidate - 1] = parse_candidate_line(line);
     }
+
+    fclose(file);
 
     return candidates;
 }
@@ -212,7 +223,7 @@ char *copy_from(const char *source, int size) {
 // Rank the TA of a course
 void rank_candidates(Instructors *course, const Candidate **candidates) {
     for (int i = 0; i < number_of_candidate; ++i) {
-        if (satisfy_required_skills(course, candidates[i])) {
+        if (is_satisfy_required_skills(course, candidates[i])) {
             float score = calculate_score(course, candidates[i]);
             char sid[SID_STRING_SIZE];
             sprintf(sid, "%d ", candidates[i]->sid);
@@ -223,7 +234,7 @@ void rank_candidates(Instructors *course, const Candidate **candidates) {
 }
 
 // Check if a candidate satisfy all required skills
-int satisfy_required_skills(Instructors *course, const Candidate *candidate) {
+int is_satisfy_required_skills(Instructors *course, const Candidate *candidate) {
     // Check if all required skills are substrings of candidate's skills
     if (strstr(candidate->skills, course->required_skills[0]) != NULL &&
         strstr(candidate->skills, course->required_skills[1]) != NULL &&
@@ -282,4 +293,31 @@ void insert_candidate(Instructors *course, float score, char *sid) {
             break;
         }
     }
+}
+
+// Get the output string of a course TA ranking result
+char *get_rank_result(Instructors *course) {
+    char course_id[COURSE_STRING_SIZE];
+    sprintf(course_id, "%d ", course->id);
+    char *result = malloc(sizeof(char) * (COURSE_SLOT_SIZE + 3 * SID_SLOT_SIZE));
+    result[0] = '\0';   // Ensure the memory is an empty string
+
+    strcat(result, course_id);
+    strcat(result, course->candidate_sid[0]);
+    strcat(result, course->candidate_sid[1]);
+    strcat(result, course->candidate_sid[2]);
+
+    return result;
+}
+
+// Write the ranking result to output.txt
+void write_output_file(Instructors **courses) {
+    FILE *file = open_file("./output.txt", "w", "error on writing file!");
+
+    for (int i = 0; i < number_of_course; ++i) {
+        char *result = get_rank_result(courses[i]);
+        fprintf(file, "%s\n", result);
+    }
+
+    fclose(file);
 }
