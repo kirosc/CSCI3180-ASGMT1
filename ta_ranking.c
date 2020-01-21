@@ -7,6 +7,7 @@
 #define SKILL_SLOT_SIZE  15
 #define SKILL_STRING_SIZE  16
 #define SID_SLOT_SIZE  11
+#define SID_STRING_SIZE  12
 #define MAX_REQUIRED_SKILLS  3
 #define MAX_OPTIONAL_SKILLS  5
 #define MAX_CANDIDATE_SKILLS  8
@@ -21,8 +22,8 @@ typedef struct Instructors {
     int id;
     const char *required_skills[MAX_REQUIRED_SKILLS];
     const char *optional_skills[MAX_OPTIONAL_SKILLS];
-    int candidate_score[MAX_RANK];
-    char candidate_sid[MAX_RANK][SID_SLOT_SIZE];
+    float candidate_score[MAX_RANK];
+    char candidate_sid[MAX_RANK][SID_STRING_SIZE];
 } Instructors;
 
 typedef struct Candidate {
@@ -57,15 +58,21 @@ float calculate_score(const Instructors *course, const Candidate *candidate);
 
 int satisfy_required_skills(Instructors *course, const Candidate *candidate);
 
+void insert_candidate(Instructors *course, float score, char *sid);
+
 int number_of_course, number_of_candidate;
 
 int main() {
     Instructors **courses = NULL;
     Candidate **candidates = NULL;
+
     courses = read_instructors_file();
     candidates = read_candidates_file();
 
-    rank_candidates(courses[0], (const Candidate **) candidates);
+    // Rank the candidates for each course
+    for (int i = 0; i < number_of_course; ++i) {
+        rank_candidates(courses[i], (const Candidate **) candidates);
+    }
 
     return 0;
 }
@@ -193,7 +200,7 @@ int parse_number(char **ptr) {
     return number;
 }
 
-// Copy a number of characters and pad a null character
+// Copy a number of characters and pad a null character at the end
 char *copy_from(const char *source, int size) {
     char *destination = malloc(sizeof(char) * size);
     strncpy(destination, source, size - 1);
@@ -202,21 +209,26 @@ char *copy_from(const char *source, int size) {
     return destination;
 }
 
-// Get the TA rank of a course
+// Rank the TA of a course
 void rank_candidates(Instructors *course, const Candidate **candidates) {
     for (int i = 0; i < number_of_candidate; ++i) {
         if (satisfy_required_skills(course, candidates[i])) {
             float score = calculate_score(course, candidates[i]);
+            char sid[SID_STRING_SIZE];
+            sprintf(sid, "%d ", candidates[i]->sid);
+
+            insert_candidate(course, score, sid);
         }
     }
 }
 
 // Check if a candidate satisfy all required skills
 int satisfy_required_skills(Instructors *course, const Candidate *candidate) {
+    // Check if all required skills are substrings of candidate's skills
     if (strstr(candidate->skills, course->required_skills[0]) != NULL &&
         strstr(candidate->skills, course->required_skills[1]) != NULL &&
         strstr(candidate->skills, course->required_skills[2]) != NULL) {
-            return 1;
+        return 1;
     }
 
     return 0;
@@ -243,4 +255,31 @@ float calculate_score(const Instructors *course, const Candidate *candidate) {
     }
 
     return score;
+}
+
+// Insert a qualified candidate to the right spot in descending order by score
+void insert_candidate(Instructors *course, float score, char *sid) {
+    for (int i = 0; i < MAX_RANK; ++i) {
+        if (score > course->candidate_score[i]) {
+            if (course->candidate_score[i] == 0.0f) {
+                // Empty slot
+                course->candidate_score[i] = score;
+                strcpy(course->candidate_sid[i], sid);
+            } else {
+                // The original TA in this spot has a lower score now
+                // Store it in a temporary buffer
+                float temp_score = course->candidate_score[i];
+                char temp_sid[SID_STRING_SIZE];
+                strcpy(temp_sid, course->candidate_sid[i]);
+
+                course->candidate_score[i] = score;
+                strcpy(course->candidate_sid[i], sid);
+
+                // Find a new spot for the original TA
+                insert_candidate(course, temp_score, temp_sid);
+            }
+
+            break;
+        }
+    }
 }
