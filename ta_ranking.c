@@ -184,9 +184,11 @@ Candidate *parse_candidate_line(char *ptr) {
 
     candidate->sid = parse_number(&ptr);
 
-    strcpy(candidate->skills, parse_candidate_skills(&ptr));
+    const char *skills = parse_candidate_skills(&ptr);
+    strcpy(candidate->skills, skills);
+    free(skills);
 
-    for (int i = 0; i < MAX_CANDIDATE_SKILLS; ++i) {
+    for (int i = 0; i < MAX_PREFERENCE; ++i) {
         candidate->preference[i] = parse_number(&ptr);
     }
 
@@ -224,6 +226,7 @@ char *copy_from(const char *source, int size) {
 void rank_candidates(Instructors *course, const Candidate **candidates) {
     for (int i = 0; i < number_of_candidate; ++i) {
         if (is_satisfy_required_skills(course, candidates[i])) {
+            // Get the TA SID and score
             float score = calculate_score(course, candidates[i]);
             char sid[SID_STRING_SIZE];
             sprintf(sid, "%d ", candidates[i]->sid);
