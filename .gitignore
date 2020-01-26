@@ -141,3 +141,4 @@ dkms.conf
 # Custom
 .idea
 CMakeLists.txt
+*.bat
