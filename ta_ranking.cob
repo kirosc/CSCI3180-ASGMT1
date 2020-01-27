@@ -38,11 +38,11 @@
 
        PROCEDURE DIVISION.
        MAIN.
-           PERFORM OPEN-CANDIDATE-FILE.
+           OPEN INPUT CANDIDATE-FILE.
            PERFORM READ-INSTRUCTOR-FILE.
       *    PERFORM READ-CANDIDATE-LINE 8 TIMES.
 
-           PERFORM CLOSE-CANDIDATE-FILE.
+           CLOSE CANDIDATE-FILE.
            STOP RUN.
 
       * Read the instructors.txt
@@ -52,12 +52,9 @@
            CLOSE INSTRUCTOR-FILE.
            MOVE ' ' TO INSTRUCTOR-EOF.
 
-       OPEN-CANDIDATE-FILE.
-           OPEN INPUT CANDIDATE-FILE.
-
-       CLOSE-CANDIDATE-FILE.
+       REOPEN-CANDIDATE-FILE.
            CLOSE CANDIDATE-FILE.
-           MOVE ' ' TO CANDIDATE-EOF.
+           OPEN INPUT CANDIDATE-FILE.
 
       * Read all instructors information
        READ-INSTRUCTOR-LINES.
@@ -65,23 +62,23 @@
                READ INSTRUCTOR-FILE INTO INSTRUCTOR
                    AT END MOVE 'Y' TO INSTRUCTOR-EOF
                    NOT AT END
-                       PERFORM RANK-TA 6 TIMES
-                       DISPLAY "###"
+                       PERFORM RANK-TA
                        GO TO READ-INSTRUCTOR-LINES
                END-READ
            END-IF.
 
        RANK-TA.
       *    Read all candidates and move to top
+           PERFORM READ-CANDIDATE-LINE.
            IF CANDIDATE-EOF='Y' THEN
-               PERFORM CLOSE-CANDIDATE-FILE
-               PERFORM OPEN-CANDIDATE-FILE
+               DISPLAY "##############"
+               MOVE ' ' TO CANDIDATE-EOF
                EXIT PARAGRAPH
            END-IF.
 
-           PERFORM READ-CANDIDATE-LINE.
            PERFORM CALCULATE-CANDIDATE-SCORE.
-           PERFORM RESET-WS.
+           PERFORM RESET-VARIABLES.
+           GO TO RANK-TA.
 
       * Read a candidate information
        READ-CANDIDATE-LINE.
@@ -91,9 +88,7 @@
       *                Because of the empty line at the end of the file,
       *                that line has to be discarded
                        MOVE 'Y' TO CANDIDATE-EOF
-                       PERFORM CLOSE-CANDIDATE-FILE
-                       PERFORM OPEN-CANDIDATE-FILE
-                       READ CANDIDATE-FILE INTO CANDIDATE
+                       PERFORM REOPEN-CANDIDATE-FILE
                END-READ
            END-IF.
 
@@ -143,7 +138,7 @@
                EXIT PARAGRAPH
            END-IF.
 
-       RESET-WS.
+       RESET-VARIABLES.
            INITIALIZE COURSE-CANDIDATES REPLACING
            ALPHANUMERIC DATA BY '0000000000 '.
            MOVE 1 TO SCORES.
