@@ -38,13 +38,9 @@
 
        PROCEDURE DIVISION.
        MAIN.
-           PERFORM READ-INSTRUCTOR-FILE.
            PERFORM OPEN-CANDIDATE-FILE.
-           PERFORM READ-CANDIDATE-LINE 1 TIMES.
-
-           DISPLAY OPT-SKILLS.
-           DISPLAY TA-SKILLS.
-           PERFORM CHECK-OPT-SKILLS.
+           PERFORM READ-INSTRUCTOR-FILE.
+      *    PERFORM READ-CANDIDATE-LINE 8 TIMES.
 
            PERFORM CLOSE-CANDIDATE-FILE.
            STOP RUN.
@@ -68,32 +64,49 @@
            IF NOT INSTRUCTOR-EOF='Y' THEN
                READ INSTRUCTOR-FILE INTO INSTRUCTOR
                    AT END MOVE 'Y' TO INSTRUCTOR-EOF
-      *            NOT AT END
-      *                PERFORM RANK-TA
-      *                GO TO READ-INSTRUCTOR-LINES
+                   NOT AT END
+                       PERFORM RANK-TA 6 TIMES
+                       DISPLAY "###"
+                       GO TO READ-INSTRUCTOR-LINES
                END-READ
            END-IF.
 
        RANK-TA.
+      *    Read all candidates and move to top
+           IF CANDIDATE-EOF='Y' THEN
+               PERFORM CLOSE-CANDIDATE-FILE
+               PERFORM OPEN-CANDIDATE-FILE
+               EXIT PARAGRAPH
+           END-IF.
+
            PERFORM READ-CANDIDATE-LINE.
            PERFORM CALCULATE-CANDIDATE-SCORE.
+           PERFORM RESET-WS.
 
       * Read a candidate information
        READ-CANDIDATE-LINE.
            IF NOT CANDIDATE-EOF='Y' THEN
                READ CANDIDATE-FILE INTO CANDIDATE
-                   AT END MOVE 'Y' TO CANDIDATE-EOF
+                   AT END
+      *                Because of the empty line at the end of the file,
+      *                that line has to be discarded
+                       MOVE 'Y' TO CANDIDATE-EOF
+                       PERFORM CLOSE-CANDIDATE-FILE
+                       PERFORM OPEN-CANDIDATE-FILE
+                       READ CANDIDATE-FILE INTO CANDIDATE
                END-READ
            END-IF.
 
        CALCULATE-CANDIDATE-SCORE.
            PERFORM CHECK-REQ-SKILLS.
-           IF NOT MATCHED-SKILLS = 3 THEN
-               EXIT PARAGRAPH
-           END-IF
+      *    IF NOT MATCHED-SKILLS = 3 THEN
+      *        EXIT PARAGRAPH
+      *    END-IF
 
            PERFORM CHECK-OPT-SKILLS.
            PERFORM CHECK-PREFERENCES.
+           DISPLAY SCORES.
+
       *    Easier and cleaner if insert candidate here
            PERFORM INSERT-CANDIDATE.
 
@@ -112,10 +125,23 @@
            TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(3)
            TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(4)
            TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(5).
-           DISPLAY MATCHED-SKILLS.
-           
+
+           ADD MATCHED-SKILLS TO SCORES.
+
+      * Check candidate's preference and add the preference_score   
        CHECK-PREFERENCES.
-           DISPLAY ' '.
+           IF PREFERENCE(1) EQUAL COURSE-ID THEN
+               ADD 1.5 TO SCORES
+               EXIT PARAGRAPH
+           END-IF.
+           IF PREFERENCE(2) EQUAL COURSE-ID THEN
+               ADD 1.0 TO SCORES
+               EXIT PARAGRAPH
+           END-IF.
+           IF PREFERENCE(3) EQUAL COURSE-ID THEN
+               ADD 0.5 TO SCORES
+               EXIT PARAGRAPH
+           END-IF.
 
        RESET-WS.
            INITIALIZE COURSE-CANDIDATES REPLACING
