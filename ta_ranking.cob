@@ -4,10 +4,12 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT INSTRUCTOR-FILE ASSIGN TO 'instructors.txt'
-               ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT CANDIDATE-FILE ASSIGN TO 'candidates.txt'
-               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OPTIONAL INSTRUCTOR-FILE ASSIGN TO 'instructors.txt'
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS FS1.
+           SELECT OPTIONAL CANDIDATE-FILE ASSIGN TO 'candidates.txt'
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS FS2.
            SELECT OPTIONAL OUTPUT-FILE ASSIGN TO 'output.txt'
                ORGANIZATION IS BINARY SEQUENTIAL.
 
@@ -36,12 +38,17 @@
            05 RESULT-EOL PIC X.
 
        WORKING-STORAGE SECTION.
+      *File status
+       01 FS1              PIC 9(2).
+       01 FS2              PIC 9(2).
       *Variables to keep track of the EOF
-       01 INSTRUCTOR-EOF PIC A(1).
-       01 CANDIDATE-EOF PIC A(1).
+       01 INSTRUCTOR-EOF   PIC A(1).
+       01 CANDIDATE-EOF    PIC A(1).
       *Variables for current evaluated candidate
-       01 MATCHED-SKILLS PIC 9(1).
-       01 SCORES PIC 9(1)V9(1) VALUE 1.
+       01 MATCHED-SKILLS   PIC 9(1).
+       01 SCORES           PIC 9(1)V9(1) VALUE 1.
+      *Index for ranked candidates
+       01 IDX              PIC 9(1).
       *Ranked candidates
        01 COURSE-CANDIDATES.
            05 COURSE-SIDS.
@@ -49,21 +56,32 @@
                VALUE '0000000000 '.
            05 COURSE-CANDIDATE-SCORE PIC 9(1)V9(1) OCCURS 4 TIMES
            VALUE 0.
-      *Index for ranked candidates
-       01 IDX PIC 9(1).
 
        PROCEDURE DIVISION.
        MAIN.
-           OPEN INPUT CANDIDATE-FILE.
+           PERFORM CHECK-FS.
            PERFORM READ-INSTRUCTOR-FILE.
 
            CLOSE CANDIDATE-FILE.
            STOP RUN.
 
+      *Check the presence of required files
+       CHECK-FS.
+           OPEN INPUT CANDIDATE-FILE.
+           OPEN INPUT INSTRUCTOR-FILE.
+           IF NOT FS1 = 00 OR NOT FS2 EQUAL 00 THEN
+               DISPLAY 'non-existing file!'
+               CLOSE CANDIDATE-FILE
+               CLOSE INSTRUCTOR-FILE
+               STOP RUN
+           END-IF.
+      *    Empty output.txt content
+           OPEN OUTPUT OUTPUT-FILE.
+           CLOSE OUTPUT-FILE.
+
       *Read the instructors.txt
        READ-INSTRUCTOR-FILE.
-           OPEN INPUT INSTRUCTOR-FILE.
-               PERFORM READ-INSTRUCTOR-LINES.
+           PERFORM READ-INSTRUCTOR-LINES.
            CLOSE INSTRUCTOR-FILE.
            MOVE ' ' TO INSTRUCTOR-EOF.
 
@@ -78,7 +96,6 @@
                    AT END MOVE 'Y' TO INSTRUCTOR-EOF
                    NOT AT END
                        PERFORM RANK-TA
-                       DISPLAY COURSE-CANDIDATES
                        PERFORM WRITE-TO-OUTPUT
                        PERFORM RESET-CANDIDATES
                        GO TO READ-INSTRUCTOR-LINES
