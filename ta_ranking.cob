@@ -8,6 +8,8 @@
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT CANDIDATE-FILE ASSIGN TO 'candidates.txt'
                ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OPTIONAL OUTPUT-FILE ASSIGN TO 'output.txt'
+               ORGANIZATION IS BINARY SEQUENTIAL.
 
        DATA DIVISION.
        FILE SECTION.
@@ -26,6 +28,13 @@
            05 PREFERENCES.
                10 PREFERENCE PIC X(5) OCCURS 3 TIMES.
 
+       FD OUTPUT-FILE.
+       01 RESULT.
+           05 RESULT-COURSE-ID PIC X(5).
+           05 RESULT-SIDS.
+               10 RESULT-SID PIC X(11) OCCURS 3 TIMES.
+           05 RESULT-EOL PIC X.
+
        WORKING-STORAGE SECTION.
       *Variables to keep track of the EOF
        01 INSTRUCTOR-EOF PIC A(1).
@@ -35,8 +44,9 @@
        01 SCORES PIC 9(1)V9(1) VALUE 1.
       *Ranked candidates
        01 COURSE-CANDIDATES.
-           05 COURSE-CANDIDATE PIC X(11) OCCURS 4 TIMES
-           VALUE '0000000000 '.
+           05 COURSE-SIDS.
+               10  COURSE-SID PIC X(11) OCCURS 4 TIMES
+               VALUE '0000000000 '.
            05 COURSE-CANDIDATE-SCORE PIC 9(1)V9(1) OCCURS 4 TIMES
            VALUE 0.
       *Index for ranked candidates
@@ -46,7 +56,6 @@
        MAIN.
            OPEN INPUT CANDIDATE-FILE.
            PERFORM READ-INSTRUCTOR-FILE.
-      *    PERFORM READ-CANDIDATE-LINE 8 TIMES.
 
            CLOSE CANDIDATE-FILE.
            STOP RUN.
@@ -70,6 +79,7 @@
                    NOT AT END
                        PERFORM RANK-TA
                        DISPLAY COURSE-CANDIDATES
+                       PERFORM WRITE-TO-OUTPUT
                        PERFORM RESET-CANDIDATES
                        GO TO READ-INSTRUCTOR-LINES
                END-READ
@@ -167,7 +177,7 @@
                    EXIT PARAGRAPH
                END-IF
 
-               MOVE SID TO COURSE-CANDIDATE(1)
+               MOVE SID TO COURSE-SID(1)
                MOVE SCORES TO COURSE-CANDIDATE-SCORE(1)
                EXIT PARAGRAPH
            END-IF.
@@ -179,7 +189,7 @@
                    EXIT PARAGRAPH
                END-IF
 
-               MOVE SID TO COURSE-CANDIDATE(2)
+               MOVE SID TO COURSE-SID(2)
                MOVE SCORES TO COURSE-CANDIDATE-SCORE(2)
                EXIT PARAGRAPH
            END-IF.
@@ -191,7 +201,7 @@
                    EXIT PARAGRAPH
                END-IF
 
-               MOVE SID TO COURSE-CANDIDATE(3)
+               MOVE SID TO COURSE-SID(3)
                MOVE SCORES TO COURSE-CANDIDATE-SCORE(3)
                EXIT PARAGRAPH
            END-IF.
@@ -199,10 +209,19 @@
       *Swap a higher score candidate with an inserted lower score
       *candidate
        SWAP-CANDIDATE.
-           MOVE COURSE-CANDIDATE(IDX) TO COURSE-CANDIDATE(4).
+           MOVE COURSE-SID(IDX) TO COURSE-SID(4).
            MOVE COURSE-CANDIDATE-SCORE(IDX) TO 
                 COURSE-CANDIDATE-SCORE(4).
-           MOVE SID TO COURSE-CANDIDATE(IDX).
+           MOVE SID TO COURSE-SID(IDX).
            MOVE SCORES TO COURSE-CANDIDATE-SCORE(IDX).
-           MOVE COURSE-CANDIDATE(4) TO SID.
+           MOVE COURSE-SID(4) TO SID.
            MOVE COURSE-CANDIDATE-SCORE(4) TO SCORES.
+
+       WRITE-TO-OUTPUT.
+           MOVE COURSE-ID TO RESULT-COURSE-ID.
+           MOVE COURSE-SIDS TO RESULT-SIDS.
+           MOVE X'0A' to RESULT-EOL.
+           OPEN EXTEND OUTPUT-FILE.
+               WRITE RESULT
+               END-WRITE.
+           CLOSE OUTPUT-FILE.
