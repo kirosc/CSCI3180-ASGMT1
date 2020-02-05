@@ -101,7 +101,7 @@ FILE *open_file(const char *name, const char *mode, const char *error_message) {
 // Read the instructors.txt and return an array of Instructors
 Instructors **read_instructors_file() {
     // TODO: Remove .. when submit
-    FILE *file = open_file("../instructors.txt", "r", "non-existing file!");
+    FILE *file = open_file("instructors.txt", "r", "non-existing file!");
 
     char line[INSTRUCTOR_LINE_SIZE];
     Instructors **courses = NULL;
@@ -157,7 +157,7 @@ const char *parse_instructor_skill(char **ptr) {
 
 // Read the candidates.txt and return an array of Candidate
 Candidate **read_candidates_file() {
-    FILE *file = open_file("../candidates.txt", "r", "non-existing file!");
+    FILE *file = open_file("candidates.txt", "r", "non-existing file!");
 
     char line[CANDIDATE_LINE_SIZE];
     Candidate **candidates = NULL;
@@ -315,7 +315,7 @@ char *get_rank_result(Instructors *course) {
 
 // Write the ranking result to output.txt
 void write_output_file(Instructors **courses) {
-    FILE *file = open_file("./output.txt", "w", "error on writing file!");
+    FILE *file = open_file("output.txt", "w", "error on writing file!");
 
     for (int i = 0; i < number_of_course; ++i) {
         char *result = get_rank_result(courses[i]);
