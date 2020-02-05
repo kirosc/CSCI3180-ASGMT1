@@ -186,7 +186,7 @@ Candidate *parse_candidate_line(char *ptr) {
 
     const char *skills = parse_candidate_skills(&ptr);
     strcpy(candidate->skills, skills);
-    free(skills);
+    free((void *)skills);
 
     for (int i = 0; i < MAX_PREFERENCE; ++i) {
         candidate->preference[i] = parse_number(&ptr);
@@ -315,7 +315,7 @@ char *get_rank_result(Instructors *course) {
 
 // Write the ranking result to output.txt
 void write_output_file(Instructors **courses) {
-    FILE *file = open_file("output.txt", "w", "error on writing file!");
+    FILE *file = open_file("output-c.txt", "w", "error on writing file!");
 
     for (int i = 0; i < number_of_course; ++i) {
         char *result = get_rank_result(courses[i]);
