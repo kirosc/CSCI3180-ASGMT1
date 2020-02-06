@@ -184,7 +184,7 @@ Candidate *parse_candidate_line(char *ptr) {
     candidate->sid = parse_number(&ptr);
 
     const char *skills = parse_candidate_skills(&ptr);
-    strcpy(candidate->skills, skills);
+    strncpy(candidate->skills, skills, MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE);
     free((void *)skills);
 
     for (int i = 0; i < MAX_PREFERENCE; ++i) {
