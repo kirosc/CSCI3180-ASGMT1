@@ -274,12 +274,17 @@ float calculate_score(const Instructors *course, const Candidate *candidate) {
 // Insert a qualified candidate to the right spot in descending order by score
 void insert_candidate(Instructors *course, float score, char *sid) {
     for (int i = 0; i < MAX_RANK; ++i) {
-        if (score > course->candidate_score[i]) {
+        if (score >= course->candidate_score[i]) {
             if (course->candidate_score[i] == 0.0f) {
                 // Empty slot
                 course->candidate_score[i] = score;
                 strcpy(course->candidate_sid[i], sid);
             } else {
+                // Sort SID in ascending order when the scores are same
+                if (score == course->candidate_score[i] && strcmp(sid, course->candidate_sid[i]) > 0) {
+                    continue;
+                }
+
                 // The original TA in this spot has a lower score now
                 // Store it in a temporary buffer
                 float temp_score = course->candidate_score[i];

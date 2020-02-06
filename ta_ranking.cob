@@ -185,42 +185,52 @@
            
       *Insert candidate by insertion sort    
        INSERT-CANDIDATE.
-           IF SCORES > COURSE-CANDIDATE-SCORE(1) THEN
-               IF COURSE-CANDIDATE-SCORE(1) > 0 THEN
+           IF SCORES >= COURSE-CANDIDATE-SCORE(1) THEN
+      *        Empty slot    
+               IF COURSE-CANDIDATE-SCORE(1) = 0 THEN
+                   MOVE SID TO COURSE-SID(1)
+                   MOVE SCORES TO COURSE-CANDIDATE-SCORE(1)
+                   EXIT PARAGRAPH
+               END-IF
+      *        A candidate has a higher score or
+      *        same score but a smaller SID
+               IF SCORES > COURSE-CANDIDATE-SCORE(1) OR
+                  SID < COURSE-SID(1) THEN
                    MOVE 1 TO IDX
                    PERFORM SWAP-CANDIDATE
-      *            Insert the swapped out candidate
                    PERFORM INSERT-CANDIDATE
                    EXIT PARAGRAPH
                END-IF
-
-               MOVE SID TO COURSE-SID(1)
-               MOVE SCORES TO COURSE-CANDIDATE-SCORE(1)
-               EXIT PARAGRAPH
            END-IF.
-           IF SCORES > COURSE-CANDIDATE-SCORE(2) THEN
-               IF COURSE-CANDIDATE-SCORE(2) > 0 THEN
+           IF SCORES >= COURSE-CANDIDATE-SCORE(2) THEN
+               IF COURSE-CANDIDATE-SCORE(2) = 0 THEN
+                   MOVE SID TO COURSE-SID(2)
+                   MOVE SCORES TO COURSE-CANDIDATE-SCORE(2)
+                   EXIT PARAGRAPH
+               END-IF
+
+               IF SCORES > COURSE-CANDIDATE-SCORE(2) OR
+                  SID < COURSE-SID(2) THEN
                    MOVE 2 TO IDX
                    PERFORM SWAP-CANDIDATE
                    PERFORM INSERT-CANDIDATE
                    EXIT PARAGRAPH
                END-IF
-
-               MOVE SID TO COURSE-SID(2)
-               MOVE SCORES TO COURSE-CANDIDATE-SCORE(2)
-               EXIT PARAGRAPH
            END-IF.
-           IF SCORES > COURSE-CANDIDATE-SCORE(3) THEN
-               IF COURSE-CANDIDATE-SCORE(3) > 0 THEN
+           IF SCORES >= COURSE-CANDIDATE-SCORE(3) THEN
+               IF COURSE-CANDIDATE-SCORE(3) = 0 THEN
+                   MOVE SID TO COURSE-SID(3)
+                   MOVE SCORES TO COURSE-CANDIDATE-SCORE(3)
+                   EXIT PARAGRAPH
+               END-IF
+
+               IF SCORES > COURSE-CANDIDATE-SCORE(3) OR
+                  SID < COURSE-SID(3) THEN
                    MOVE 3 TO IDX
                    PERFORM SWAP-CANDIDATE
                    PERFORM INSERT-CANDIDATE
                    EXIT PARAGRAPH
                END-IF
-
-               MOVE SID TO COURSE-SID(3)
-               MOVE SCORES TO COURSE-CANDIDATE-SCORE(3)
-               EXIT PARAGRAPH
            END-IF.
 
       *Swap a higher score candidate with an inserted lower score
