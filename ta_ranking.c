@@ -100,7 +100,6 @@ FILE *open_file(const char *name, const char *mode, const char *error_message) {
 
 // Read the instructors.txt and return an array of Instructors
 Instructors **read_instructors_file() {
-    // TODO: Remove .. when submit
     FILE *file = open_file("instructors.txt", "r", "non-existing file!");
 
     char line[INSTRUCTOR_LINE_SIZE];
