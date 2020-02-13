@@ -30,7 +30,7 @@ typedef struct Instructors {
 
 typedef struct Candidate {
     int sid;
-    char skills[MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + 1];
+    char skills[MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + MAX_CANDIDATE_SKILLS];
     int preference[MAX_PREFERENCE];
 } Candidate;
 
@@ -184,8 +184,8 @@ Candidate *parse_candidate_line(char *ptr) {
     candidate->sid = parse_number(&ptr);
 
     const char *skills = parse_candidate_skills(&ptr);
-    strcpy(candidate->skills, skills);
-    free((void *)skills);
+    strncpy(candidate->skills, skills, MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + MAX_CANDIDATE_SKILLS);
+    free((void *) skills);
 
     for (int i = 0; i < MAX_PREFERENCE; ++i) {
         candidate->preference[i] = parse_number(&ptr);
@@ -196,10 +196,20 @@ Candidate *parse_candidate_line(char *ptr) {
 
 // Parse all candidate skills and return in a single string
 const char *parse_candidate_skills(char **ptr) {
-    const int CHARS_TO_READ = MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + 1;
+    char *skills = malloc(MAX_CANDIDATE_SKILLS * SKILL_SLOT_SIZE + MAX_CANDIDATE_SKILLS);
+    skills[0] = '\0';
 
-    const char *skills = copy_from((*ptr), CHARS_TO_READ);
-    (*ptr) += CHARS_TO_READ - 1;
+    // Parse each skill and delimit by a comma
+    for (int i = 0; i < MAX_CANDIDATE_SKILLS; ++i) {
+        const char *skill = copy_from((*ptr), SKILL_SLOT_SIZE + 1);
+        (*ptr) += SKILL_SLOT_SIZE;
+        strcat(skills, skill);
+        free((void *) skill);
+
+        if (i < MAX_CANDIDATE_SKILLS - 1) {
+            strcat(skills, ",");
+        }
+    }
 
     return skills;
 }
