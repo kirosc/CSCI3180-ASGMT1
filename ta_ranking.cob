@@ -26,7 +26,8 @@
        FD CANDIDATE-FILE.
        01 CANDIDATE.
            05 SID PIC X(11).
-           05 TA-SKILLS PIC X(120).
+           05 TA-SKILLS.
+               10 TA-SKILL PIC X(15) OCCURS 8 TIMES.
            05 PREFERENCES.
                10 PREFERENCE PIC X(5) OCCURS 3 TIMES.
 
@@ -45,6 +46,7 @@
        01 INSTRUCTOR-EOF   PIC A(1).
        01 CANDIDATE-EOF    PIC A(1).
       *Variables for current evaluated candidate
+       01 SKILLS-DELIMITED PIC X(127).
        01 MATCHED-SKILLS   PIC 9(1).
        01 SCORES           PIC 9(1)V9(1) VALUE 1.
       *Index for ranked candidates
@@ -128,6 +130,7 @@
            END-IF.
 
        CALCULATE-CANDIDATE-SCORE.
+           PERFORM DELIMIT-SKILLS.
            PERFORM CHECK-REQ-SKILLS.
            IF NOT MATCHED-SKILLS = 3 THEN
                EXIT PARAGRAPH
@@ -139,21 +142,40 @@
       *    Easier and cleaner if insert candidate here
            PERFORM INSERT-CANDIDATE.
 
+      *Delimit each skill name by comma
+       DELIMIT-SKILLS.
+           STRING TA-SKILL(1) DELIMITED BY SIZE
+           ","
+           TA-SKILL(2) DELIMITED BY SIZE
+           ","
+           TA-SKILL(3) DELIMITED BY SIZE
+           ","
+           TA-SKILL(4) DELIMITED BY SIZE
+           ","
+           TA-SKILL(5) DELIMITED BY SIZE
+           ","
+           TA-SKILL(6) DELIMITED BY SIZE
+           ","
+           TA-SKILL(7) DELIMITED BY SIZE
+           ","
+           TA-SKILL(8) DELIMITED BY SIZE
+           INTO SKILLS-DELIMITED.
+
        CHECK-REQ-SKILLS.
-           INSPECT TA-SKILLS
-           TALLYING MATCHED-SKILLS FOR ALL REQ-SKILL(1)
-           TALLYING MATCHED-SKILLS FOR ALL REQ-SKILL(2)
-           TALLYING MATCHED-SKILLS FOR ALL REQ-SKILL(3).
+           INSPECT SKILLS-DELIMITED TALLYING MATCHED-SKILLS 
+           FOR ALL REQ-SKILL(1)
+                   REQ-SKILL(2)
+                   REQ-SKILL(3).
            
        CHECK-OPT-SKILLS.
            MOVE 0 TO MATCHED-SKILLS
 
-           INSPECT TA-SKILLS
-           TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(1)
-           TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(2)
-           TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(3)
-           TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(4)
-           TALLYING MATCHED-SKILLS FOR ALL OPT-SKILL(5).
+           INSPECT SKILLS-DELIMITED TALLYING MATCHED-SKILLS
+           FOR ALL OPT-SKILL(1)
+                   OPT-SKILL(2)
+                   OPT-SKILL(3)
+                   OPT-SKILL(4)
+                   OPT-SKILL(5).
 
            ADD MATCHED-SKILLS TO SCORES.
 
